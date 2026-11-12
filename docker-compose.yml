@@ -1,0 +1,55 @@
+# Sharqey server, self-hosted. See README.md.
+#
+#   cp .env.example .env   # then fill in the values
+#   docker compose up -d
+#   docker compose logs app | grep bootstrap   # first admin password
+#
+# The server listens on 127.0.0.1:8080. Put a reverse proxy with TLS
+# (Caddy, Traefik, nginx) in front of it and set BASE_URL to its https URL:
+# the browser extension and the apps only talk to HTTPS servers.
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: sharqey
+      POSTGRES_USER: sharqey
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sharqey"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  app:
+    # Pin a version; don't use :latest (see README, "Updating").
+    image: ghcr.io/sharqey/server:${SHARQEY_VERSION:?set SHARQEY_VERSION in .env}
+    environment:
+      DATABASE_URL: postgres://sharqey:${POSTGRES_PASSWORD}@db:5432/sharqey?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      BASE_URL: ${BASE_URL:?set BASE_URL in .env}
+      PORT: "8080"
+      # Accounts are created by the instance admin (/admin), not by sign-up.
+      REGISTRATION_ENABLED: "false"
+      TURNSTILE_ENABLED: "false"
+      # Optional: e-mail (invitations, password reset). Without SMTP the
+      # admin hands out links from the admin panel instead.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      # Optional: license for single sign-on (Google, Apple, OIDC, SAML).
+      SHARQEY_LICENSE: ${SHARQEY_LICENSE:-}
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  db:
