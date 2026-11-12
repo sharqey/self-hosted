@@ -48,8 +48,11 @@ create accounts for your team in the admin panel (**Settings → Open admin pane
   On the sign-in screen choose **Self-hosted server** and enter your address.
 - Desktop (macOS): [sharqey/desktop releases](https://github.com/sharqey/desktop/releases) or
   `brew install --cask sharqey/tap/sharqey`.
-- CLI: [sharqey/cli releases](https://github.com/sharqey/cli/releases) or
-  `brew install sharqey/tap/sharqey`. Point it at your server with `SHARQEY_SERVER_URL`.
+- CLI: `curl -fsSL https://sharqey.example.com/install.sh | sh` installs the latest release
+  and points it at your server. Or `brew install sharqey/tap/sharqey`, or a binary from
+  [sharqey/cli releases](https://github.com/sharqey/cli/releases), then set
+  `SHARQEY_SERVER_URL`. Without access to GitHub, mirror the release files and set
+  `CLI_DOWNLOAD_URL` on the server to that mirror.
 
 ## Single sign-on and the license
 
